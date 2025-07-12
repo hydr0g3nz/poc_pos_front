@@ -1,56 +1,47 @@
+'use client';
+import React from 'react';
+import { MainLayout } from '@/components/templates/MainLayout';
+import { TableGrid, RevenueOverview } from '@/components/organisms';
+import { Text, Button } from '@/components/atoms';
+import { Table, Order } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
-import Link from "next/link"
+export default function HomePage() {
+  const router = useRouter();
 
-import {
-  Breadcrumb,
-  BreadcrumbEllipsis,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  const handleTableSelect = (table: Table, hasOpenOrder: boolean, openOrder?: Order) => {
+    if (hasOpenOrder && openOrder) {
+      // Navigate to existing order
+      router.push(`/orders/${openOrder.id}?table=${table.id}`);
+    } else {
+      // Navigate to create new order
+      router.push(`/tables/${table.id}/order`);
+    }
+  };
 
-export default function Home() {
   return (
-    <Breadcrumb>
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link href="/">Home</Link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-1">
-              <BreadcrumbEllipsis className="size-4" />
-              <span className="sr-only">Toggle menu</span>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem>Documentation</DropdownMenuItem>
-              <DropdownMenuItem>Themes</DropdownMenuItem>
-              <DropdownMenuItem>GitHub</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link href="/docs/components">Components</Link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbPage>Breadcrumb</BreadcrumbPage>
-        </BreadcrumbItem>
-      </BreadcrumbList>
-    </Breadcrumb>
-  )
+    <MainLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <Text variant="h2">แดชบอร์ด</Text>
+          <Button onClick={() => router.push('/qr-scanner')}>
+            สแกน QR Code
+          </Button>
+        </div>
+
+        {/* Revenue Overview */}
+        <section>
+          <Text variant="h4" className="mb-4">ภาพรวมรายได้</Text>
+          <RevenueOverview />
+        </section>
+
+        {/* Tables Overview */}
+        <section>
+          <Text variant="h4" className="mb-4">สถานะโต๊ะ</Text>
+          <TableGrid onTableSelect={handleTableSelect} />
+        </section>
+      </div>
+    </MainLayout>
+  );
 }
