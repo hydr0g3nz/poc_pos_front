@@ -330,7 +330,63 @@ class ApiClient {
   }>> {
     return this.request(`/payments?limit=${limit}&offset=${offset}`);
   }
+  // เพิ่ม methods เหล่านี้ใน ApiClient class ในไฟล์ lib/api.ts
 
+// Menu Items CRUD operations
+async createMenuItem(menuItem: {
+  name: string;
+  description?: string;
+  price: number;
+  category_id: number;
+}): Promise<ApiResponse<MenuItem>> {
+  return this.request<MenuItem>('/menu-items', {
+    method: 'POST',
+    body: JSON.stringify(menuItem),
+  });
+}
+
+async updateMenuItem(id: number, menuItem: {
+  name?: string;
+  description?: string;
+  price?: number;
+  category_id?: number;
+}): Promise<ApiResponse<MenuItem>> {
+  return this.request<MenuItem>(`/menu-items/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(menuItem),
+  });
+}
+
+async deleteMenuItem(id: number): Promise<ApiResponse<null>> {
+  return this.request<null>(`/menu-items/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+// Categories CRUD operations
+async createCategory(category: {
+  name: string;
+}): Promise<ApiResponse<Category>> {
+  return this.request<Category>('/categories', {
+    method: 'POST',
+    body: JSON.stringify(category),
+  });
+}
+
+async updateCategory(id: number, category: {
+  name?: string;
+}): Promise<ApiResponse<Category>> {
+  return this.request<Category>(`/categories/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(category),
+  });
+}
+
+async deleteCategory(id: number): Promise<ApiResponse<null>> {
+  return this.request<null>(`/categories/${id}`, {
+    method: 'DELETE',
+  });
+}
   // Revenue
   async getDailyRevenue(date: string): Promise<ApiResponse<DailyRevenue>> {
     return this.request<DailyRevenue>(`/revenue/daily?date=${date}`);
