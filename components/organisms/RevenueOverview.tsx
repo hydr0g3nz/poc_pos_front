@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { RevenueCard } from '@/components/molecules';
 import { Spinner, Text } from '@/components/atoms';
-import { DailyRevenue, MonthlyRevenue, apiClient } from '@/lib/api';
+import { DailyRevenue, MonthlyRevenue, Payment, apiClient } from '@/lib/api';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 
@@ -15,6 +15,7 @@ export const RevenueOverview: React.FC<RevenueOverviewProps> = ({
 }) => {
   const [dailyRevenue, setDailyRevenue] = useState<DailyRevenue | null>(null);
   const [monthlyRevenue, setMonthlyRevenue] = useState<MonthlyRevenue | null>(null);
+  const [payments, setPayments] = useState<Payment[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,13 +28,15 @@ export const RevenueOverview: React.FC<RevenueOverviewProps> = ({
         const year = selectedDate.getFullYear();
         const month = selectedDate.getMonth() + 1;
 
-        const [dailyResponse, monthlyResponse] = await Promise.all([
+        const [dailyResponse, monthlyResponse, paymentsResponse] = await Promise.all([
           apiClient.getDailyRevenue(dateStr),
           apiClient.getMonthlyRevenue(year, month),
+          apiClient.getPayments(0, 0)
         ]);
 
         setDailyRevenue(dailyResponse.data);
-        setMonthlyRevenue(monthlyResponse.data);
+        setMonthlyRevenue(monthlyResponse.data)
+        setPayments(paymentsResponse.data.payments);
         setError(null);
       } catch (err) {
         console.error('Failed to fetch revenue:', err);
@@ -72,13 +75,13 @@ export const RevenueOverview: React.FC<RevenueOverviewProps> = ({
       
       <RevenueCard
         title="เงินสด"
-        amount={dailyRevenue?.order_details.cash || 0}
+        amount={payments?.filter(payment => payment.method === 'cash').reduce((total, payment) => total + payment.amount, 0) || 0}
         subtitle="วันนี้"
       />
       
       <RevenueCard
         title="บัตรเครดิต"
-        amount={dailyRevenue?.order_details.credit_card || 0}
+        amount={payments?.filter(payment => payment.method === 'credit').reduce((total, payment) => total + payment.amount, 0) || 0}
         subtitle="วันนี้"
       />
       

@@ -77,11 +77,11 @@ export interface DailyRevenue {
   date: string;
   total_revenue: number;
   total_orders: number;
-  order_details: {
-    cash: number;
-    credit_card: number;
-    wallet: number;
-  };
+  // order_details: {
+  //   cash: number;
+  //   credit_card: number;
+  //   wallet: number;
+  // };
 }
 
 export interface MonthlyRevenue {

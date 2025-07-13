@@ -5,10 +5,10 @@ import { TableGrid, RevenueOverview } from '@/components/organisms';
 import { Text, Button } from '@/components/atoms';
 import { Table, Order } from '@/lib/api';
 import { useRouter } from 'next/navigation';
-
+import { useState } from 'react';
 export default function HomePage() {
   const router = useRouter();
-
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const handleTableSelect = (table: Table, hasOpenOrder: boolean, openOrder?: Order) => {
     if (hasOpenOrder && openOrder) {
       // Navigate to existing order
@@ -33,7 +33,7 @@ export default function HomePage() {
         {/* Revenue Overview */}
         <section>
           <Text variant="h4" className="mb-4">ภาพรวมรายได้</Text>
-          <RevenueOverview />
+          <RevenueOverview selectedDate={selectedDate} />
         </section>
 
         {/* Tables Overview */}

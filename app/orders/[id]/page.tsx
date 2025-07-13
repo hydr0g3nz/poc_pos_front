@@ -88,6 +88,11 @@ export default function OrderDetailPage() {
     );
   }
 
+  // Calculate order summary values
+  // const totalItems = order.items.length > 0 ? order.items.reduce((sum, item) => sum + item.quantity, 0) : 0;
+  const totalItems = 0;
+  const hasItems = order.items.length > 0;
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -142,7 +147,7 @@ export default function OrderDetailPage() {
                 <CardTitle>รายการอาหาร</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {order.items.length === 0 ? (
+                {!hasItems ? (
                   <Text color="muted" className="text-center py-8">
                     ไม่มีรายการอาหาร
                   </Text>
@@ -176,16 +181,29 @@ export default function OrderDetailPage() {
                 <CardTitle>สรุปออร์เดอร์</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Text>จำนวนรายการ:</Text>
-                    <Text>{order.items.reduce((sum, item) => sum + item.quantity, 0)}</Text>
+                {!hasItems ? (
+                  <div className="text-center py-4">
+                    <Text color="muted">ยังไม่มีรายการอาหาร</Text>
+                    <Button
+                      variant="outline"
+                      onClick={() => router.push(`/tables/${tableId}/order`)}
+                      className="mt-3"
+                    >
+                      เพิ่มรายการอาหาร
+                    </Button>
                   </div>
-                  <div className="flex justify-between font-bold text-lg border-t pt-2">
-                    <Text>รวมทั้งสิ้น:</Text>
-                    <Text>฿{order.total.toFixed(2)}</Text>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <Text>จำนวนรายการ:</Text>
+                      <Text>{totalItems}</Text>
+                    </div>
+                    <div className="flex justify-between font-bold text-lg border-t pt-2">
+                      <Text>รวมทั้งสิ้น:</Text>
+                      <Text>฿{order.total.toFixed(2)}</Text>
+                    </div>
                   </div>
-                </div>
+                )}
                 
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <div>สร้างเมื่อ: {new Date(order.created_at).toLocaleString('th-TH')}</div>
@@ -194,7 +212,7 @@ export default function OrderDetailPage() {
                   )}
                 </div>
 
-                {order.status === 'open' && order.items.length > 0 && (
+                {order.status === 'open' && hasItems && (
                   <Button
                     variant="destructive"
                     onClick={handleCloseOrder}

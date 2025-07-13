@@ -34,8 +34,16 @@ export const TableGrid: React.FC<TableGridProps> = ({ onTableSelect }) => {
               if (orderResponse.data) {
                 openOrdersData[table.id] = orderResponse.data;
               }
-            } catch (err) {
-              // No open order for this table, which is normal
+            } catch (err: any) {
+              // Check if it's a 404 error (no open order for this table)
+              if (err.response?.status === 404 || err.status === 404) {
+                // 404 means no open order exists for this table - this is normal
+                // Don't add anything to openOrdersData for this table
+                return;
+              }
+              
+              // For other errors, log them but don't break the entire process
+              console.warn(`Error fetching order for table ${table.id}:`, err);
             }
           })
         );

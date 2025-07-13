@@ -5,7 +5,7 @@ import { OrderItemRow, OrderSummary, PaymentMethodSelector } from '@/components/
 import { Button, Text } from '@/components/atoms';
 import { OrderItem, apiClient } from '@/lib/api';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { ShoppingCart, Trash2 } from 'lucide-react';
+import { ShoppingCart, Trash2, ShoppingBag } from 'lucide-react';
 
 interface OrderCartProps {
   orderId: number;
@@ -89,7 +89,8 @@ export const OrderCart: React.FC<OrderCartProps> = ({
     }
   };
 
-  const itemCount = orderItems.reduce((sum, item) => sum + item.quantity, 0);
+  const itemCount = orderItems.length > 0 ? orderItems.reduce((sum, item) => sum + item.quantity, 0) : 0;
+  const hasItems = orderItems.length > 0;
 
   return (
     <Sheet>
@@ -121,9 +122,13 @@ export const OrderCart: React.FC<OrderCartProps> = ({
             <div className="text-center py-8">
               <Text>กำลังโหลด...</Text>
             </div>
-          ) : orderItems.length === 0 ? (
-            <div className="text-center py-8">
-              <Text color="muted">ไม่มีรายการในตะกร้า</Text>
+          ) : !hasItems ? (
+            <div className="text-center py-12">
+              <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+              <Text color="muted" className="text-lg mb-2">ไม่มีรายการในตะกร้า</Text>
+              <Text color="muted" variant="caption">
+                เพิ่มรายการอาหารเพื่อเริ่มสั่งซื้อ
+              </Text>
             </div>
           ) : (
             <>
@@ -139,6 +144,22 @@ export const OrderCart: React.FC<OrderCartProps> = ({
                   />
                 ))}
               </div>
+
+              {/* Order Summary */}
+              <Card className="border-t">
+                <CardContent className="pt-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <Text>จำนวนรายการ:</Text>
+                      <Text>{itemCount}</Text>
+                    </div>
+                    <div className="flex justify-between font-bold text-lg border-t pt-2">
+                      <Text>รวมทั้งสิ้น:</Text>
+                      <Text>฿{total.toFixed(2)}</Text>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Payment Section */}
               <Card>
@@ -160,11 +181,11 @@ export const OrderCart: React.FC<OrderCartProps> = ({
                     
                     <Button
                       onClick={handlePayment}
-                      disabled={disabled || orderItems.length === 0 || isPaymentLoading}
+                      disabled={disabled || !hasItems || isPaymentLoading}
                       isLoading={isPaymentLoading}
                       className="w-full"
                     >
-                      ชำระเงิน ฿{total.toFixed(2)}
+                      {isPaymentLoading ? 'กำลังชำระเงิน...' : `ชำระเงิน ฿${total.toFixed(2)}`}
                     </Button>
                   </div>
                 </CardContent>
