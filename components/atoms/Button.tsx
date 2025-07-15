@@ -10,6 +10,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
   icon?: LucideIcon;
   iconPosition?: 'left' | 'right';
+  glow?: boolean;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -19,6 +20,7 @@ export const Button: React.FC<ButtonProps> = ({
   isLoading = false,
   icon: Icon,
   iconPosition = 'left',
+  glow = false,
   className,
   disabled,
   ...props
@@ -29,8 +31,17 @@ export const Button: React.FC<ButtonProps> = ({
       size={size}
       disabled={disabled || isLoading}
       className={cn(
-        'transition-all duration-200',
+        'transition-all duration-300 font-medium',
         isLoading && 'opacity-70 cursor-not-allowed',
+        glow && 'active-glow',
+        variant === 'default' && 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl',
+        variant === 'outline' && 'border-border bg-card hover:bg-accent hover:text-accent-foreground',
+        variant === 'ghost' && 'hover:bg-accent hover:text-accent-foreground',
+        variant === 'secondary' && 'bg-secondary hover:bg-secondary/90 text-secondary-foreground',
+        size === 'default' && 'h-11 px-6 py-2',
+        size === 'sm' && 'h-9 px-4 py-2 text-sm',
+        size === 'lg' && 'h-12 px-8 py-3 text-lg',
+        size === 'icon' && 'h-10 w-10',
         className
       )}
       {...props}
@@ -38,7 +49,7 @@ export const Button: React.FC<ButtonProps> = ({
       {isLoading ? (
         <div className="flex items-center space-x-2">
           <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-          <span>Loading...</span>
+          {children && <span>Loading...</span>}
         </div>
       ) : (
         <div className="flex items-center space-x-2">

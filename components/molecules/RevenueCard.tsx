@@ -2,7 +2,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Text } from '@/components/atoms';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface RevenueCardProps {
   title: string;
@@ -11,6 +12,7 @@ interface RevenueCardProps {
   trend?: 'up' | 'down' | 'neutral';
   trendValue?: number;
   className?: string;
+  icon?: React.ReactNode;
 }
 
 export const RevenueCard: React.FC<RevenueCardProps> = ({
@@ -20,38 +22,51 @@ export const RevenueCard: React.FC<RevenueCardProps> = ({
   trend = 'neutral',
   trendValue,
   className,
+  icon,
 }) => {
   return (
-    <Card className={className}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <Card className={cn(
+      'relative overflow-hidden transition-all duration-300 hover-lift card-shadow',
+      className
+    )}>
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent"></div>
+      
+      <CardHeader className="relative pb-3">
         <div className="flex items-center justify-between">
-          <div>
-            <Text variant="h3" className="font-bold">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            {title}
+          </CardTitle>
+          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+            {icon || <DollarSign className="w-5 h-5 text-primary" />}
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="relative">
+        <div className="flex items-end justify-between">
+          <div className="space-y-1">
+            <Text variant="h2" className="font-bold text-foreground">
               ฿{amount.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
             </Text>
             {subtitle && (
-              <Text variant="caption" className="mt-1">
+              <Text variant="caption" className="text-muted-foreground">
                 {subtitle}
               </Text>
             )}
           </div>
+          
           {trend !== 'neutral' && trendValue !== undefined && (
-            <div className={`flex items-center space-x-1 ${
-              trend === 'up' ? 'text-green-600' : 'text-red-600'
-            }`}>
+            <div className={cn(
+              'flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium',
+              trend === 'up' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
+            )}>
               {trend === 'up' ? (
-                <TrendingUp className="w-4 h-4" />
+                <TrendingUp className="w-3 h-3" />
               ) : (
-                <TrendingDown className="w-4 h-4" />
+                <TrendingDown className="w-3 h-3" />
               )}
-              <Text variant="caption" className="font-medium">
-                {Math.abs(trendValue)}%
-              </Text>
+              <span>{Math.abs(trendValue)}%</span>
             </div>
           )}
         </div>

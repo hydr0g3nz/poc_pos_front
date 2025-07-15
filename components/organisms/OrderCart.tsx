@@ -5,7 +5,7 @@ import { OrderItemRow, OrderSummary, PaymentMethodSelector } from '@/components/
 import { Button, Text } from '@/components/atoms';
 import { OrderItem, apiClient } from '@/lib/api';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { ShoppingCart, Trash2, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, Trash2, ShoppingBag, CreditCard } from 'lucide-react';
 
 interface OrderCartProps {
   orderId: number;
@@ -25,7 +25,6 @@ export const OrderCart: React.FC<OrderCartProps> = ({
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch order items and total
   const fetchOrderData = async () => {
     if (!orderId) return;
     
@@ -95,37 +94,43 @@ export const OrderCart: React.FC<OrderCartProps> = ({
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline" className="relative">
+        <Button variant="outline" className="relative bg-card hover:bg-accent border-border">
           <ShoppingCart className="w-5 h-5 mr-2" />
           ตะกร้า
           {itemCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full w-6 h-6 text-xs flex items-center justify-center">
+            <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full w-6 h-6 text-xs flex items-center justify-center font-bold">
               {itemCount}
             </span>
           )}
         </Button>
       </SheetTrigger>
       
-      <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>รายการสั่งซื้อ</SheetTitle>
+      <SheetContent className="w-[450px] sm:w-[540px] overflow-y-auto bg-background border-border">
+        <SheetHeader className="border-b border-border pb-4">
+          <SheetTitle className="text-xl font-bold flex items-center">
+            <ShoppingBag className="w-6 h-6 mr-3 text-primary" />
+            รายการสั่งซื้อ
+          </SheetTitle>
         </SheetHeader>
         
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 space-y-6">
           {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+            <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
               <Text color="destructive" variant="caption">{error}</Text>
             </div>
           )}
           
           {isLoading ? (
-            <div className="text-center py-8">
-              <Text>กำลังโหลด...</Text>
+            <div className="text-center py-12">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <Text className="text-muted-foreground">กำลังโหลด...</Text>
             </div>
           ) : !hasItems ? (
-            <div className="text-center py-12">
-              <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <Text color="muted" className="text-lg mb-2">ไม่มีรายการในตะกร้า</Text>
+            <div className="text-center py-16">
+              <div className="w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <ShoppingBag className="w-10 h-10 text-muted-foreground" />
+              </div>
+              <Text color="muted" className="text-xl mb-2 font-medium">ไม่มีรายการในตะกร้า</Text>
               <Text color="muted" variant="caption">
                 เพิ่มรายการอาหารเพื่อเริ่มสั่งซื้อ
               </Text>
@@ -133,57 +138,70 @@ export const OrderCart: React.FC<OrderCartProps> = ({
           ) : (
             <>
               {/* Order Items */}
-              <div className="space-y-3">
-                {orderItems.map((item) => (
-                  <OrderItemRow
-                    key={item.id}
-                    item={item}
-                    onUpdateQuantity={(quantity) => handleUpdateQuantity(item.id, quantity)}
-                    onRemove={() => handleRemoveItem(item.id)}
-                    disabled={disabled}
-                  />
-                ))}
+              <div className="space-y-4">
+                <Text variant="h6" className="font-semibold">รายการอาหาร ({itemCount} รายการ)</Text>
+                <div className="space-y-3">
+                  {orderItems.map((item) => (
+                    <OrderItemRow
+                      key={item.id}
+                      item={item}
+                      onUpdateQuantity={(quantity) => handleUpdateQuantity(item.id, quantity)}
+                      onRemove={() => handleRemoveItem(item.id)}
+                      disabled={disabled}
+                    />
+                  ))}
+                </div>
               </div>
 
               {/* Order Summary */}
-              <Card className="border-t">
-                <CardContent className="pt-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <Text>จำนวนรายการ:</Text>
-                      <Text>{itemCount}</Text>
+              <Card className="bg-card border-border">
+                <CardContent className="pt-6">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <Text className="text-muted-foreground">จำนวนรายการ:</Text>
+                      <Text className="font-medium">{itemCount}</Text>
                     </div>
-                    <div className="flex justify-between font-bold text-lg border-t pt-2">
-                      <Text>รวมทั้งสิ้น:</Text>
-                      <Text>฿{total.toFixed(2)}</Text>
+                    <div className="flex justify-between items-center">
+                      <Text className="text-muted-foreground">ยอดรวม:</Text>
+                      <Text className="font-medium">฿{total.toFixed(2)}</Text>
+                    </div>
+                    <div className="border-t border-border pt-3">
+                      <div className="flex justify-between items-center">
+                        <Text className="font-bold text-lg">รวมทั้งสิ้น:</Text>
+                        <Text className="font-bold text-xl text-primary">฿{total.toFixed(2)}</Text>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Payment Section */}
-              <Card>
+              <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="text-lg">วิธีการชำระเงิน</CardTitle>
+                  <CardTitle className="text-lg flex items-center">
+                    <CreditCard className="w-5 h-5 mr-2 text-primary" />
+                    วิธีการชำระเงิน
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
                   <PaymentMethodSelector
                     selectedMethod={paymentMethod}
                     onMethodSelect={setPaymentMethod}
                     disabled={disabled || isPaymentLoading}
                   />
                   
-                  <div className="border-t pt-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <Text className="font-bold text-lg">รวมทั้งสิ้น:</Text>
-                      <Text className="font-bold text-lg">฿{total.toFixed(2)}</Text>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center py-3 border-t border-border">
+                      <Text className="font-bold text-lg">ยอดที่ต้องชำระ:</Text>
+                      <Text className="font-bold text-2xl text-primary">฿{total.toFixed(2)}</Text>
                     </div>
                     
                     <Button
                       onClick={handlePayment}
                       disabled={disabled || !hasItems || isPaymentLoading}
                       isLoading={isPaymentLoading}
-                      className="w-full"
+                      className="w-full h-14 text-lg font-bold"
+                      glow
                     >
                       {isPaymentLoading ? 'กำลังชำระเงิน...' : `ชำระเงิน ฿${total.toFixed(2)}`}
                     </Button>
