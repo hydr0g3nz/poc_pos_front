@@ -6,3 +6,5 @@ export { SearchBar } from "./SearchBar";
 export { OrderSummary } from "./OrderSummary";
 export { RevenueCard } from "./RevenueCard";
 export { PaymentMethodSelector } from "./PaymentMethodSelector";
+export { OrderProgressBar } from "./OrderProgressBar";
+export { OrderStatusCard } from "./OrderStatusCard";
