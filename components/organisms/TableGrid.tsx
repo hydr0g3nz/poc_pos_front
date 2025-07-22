@@ -3,12 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { TableCard } from '@/components/molecules';
 import { Spinner, Text } from '@/components/atoms';
 import { Table, Order, apiClient } from '@/lib/api';
+import { se } from 'date-fns/locale';
 
 interface TableGridProps {
   onTableSelect: (table: Table, hasOpenOrder: boolean, openOrder?: Order) => void;
+  onlyActive?: boolean; // Optional prop to filter active tables only
 }
 
-export const TableGrid: React.FC<TableGridProps> = ({ onTableSelect }) => {
+export const TableGrid: React.FC<TableGridProps> = ({ onTableSelect , onlyActive}) => {
   const [tables, setTables] = useState<Table[]>([]);
   const [openOrders, setOpenOrders] = useState<Record<number, Order>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -22,6 +24,7 @@ export const TableGrid: React.FC<TableGridProps> = ({ onTableSelect }) => {
         // Fetch tables
         const tablesResponse = await apiClient.getTables();
         const tablesList = tablesResponse.data.tables;
+
         setTables(tablesList);
 
         // Fetch open orders for each table
@@ -86,12 +89,16 @@ export const TableGrid: React.FC<TableGridProps> = ({ onTableSelect }) => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
       {tables.map((table) => {
-        const openOrder = openOrders[table.id];
+        const openOrder = openOrders[table.id]
+        const hasOpenOrder = !!openOrder;
+        if (onlyActive && !hasOpenOrder) {
+          return null; // Skip inactive tables if onlyActive is true
+        }
         return (
-          <TableCard
+           <TableCard
             key={table.id}
             table={table}
-            hasOpenOrder={!!openOrder}
+            hasOpenOrder={hasOpenOrder}
             orderStartTime={openOrder?.created_at}
             onClick={() => handleTableClick(table)}
           />

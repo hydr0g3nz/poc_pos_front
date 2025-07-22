@@ -375,7 +375,7 @@ export default function MenuPage() {
           <div className="text-center py-12">
             <Text color="muted" className="text-lg mb-2">ไม่พบรายการเมนู</Text>
             <Text color="muted" variant="caption">
-              คลิกปุ่ม "เพิ่มเมนูใหม่" เพื่อเริ่มต้น
+              {`คลิกปุ่ม "เพิ่มเมนูใหม่" เพื่อเริ่มต้น`}
             </Text>
           </div>
         )}

@@ -68,6 +68,15 @@ export default function OrderDetailPage() {
     }
   };
 
+  const handleCancelOrder = async () => {
+    try {
+      await apiClient.closeOrder(orderId);
+      router.push('/');
+    } catch (err) {
+      console.error('Failed to cancel order:', err);
+    }
+  };
+
   if (isLoading) {
     return (
       <MainLayout>
@@ -89,8 +98,7 @@ export default function OrderDetailPage() {
   }
 
   // Calculate order summary values
-  // const totalItems = order.items.length > 0 ? order.items.reduce((sum, item) => sum + item.quantity, 0) : 0;
-  const totalItems = 0;
+  const totalItems = order.items.length > 0 ? order.items.reduce((sum, item) => sum + item.quantity, 0) : 0;
   const hasItems = order.items.length > 0;
 
   return (
@@ -212,14 +220,26 @@ export default function OrderDetailPage() {
                   )}
                 </div>
 
-                {order.status === 'open' && hasItems && (
-                  <Button
-                    variant="destructive"
-                    onClick={handleCloseOrder}
-                    className="w-full"
-                  >
-                    ปิดออร์เดอร์
-                  </Button>
+                {order.status === 'open' && (
+                  <>
+                    {hasItems ? (
+                      <Button
+                        variant="destructive"
+                        onClick={handleCloseOrder}
+                        className="w-full"
+                      >
+                        ปิดออร์เดอร์
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="destructive"
+                        onClick={handleCancelOrder}
+                        className="w-full"
+                      >
+                        ยกเลิกออร์เดอร์
+                      </Button>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>

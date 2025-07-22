@@ -137,7 +137,7 @@ export default function HomePage() {
               จัดการโต๊ะ
             </Button>
           </div>
-          <TableGrid onTableSelect={handleTableSelect} />
+          <TableGrid onTableSelect={handleTableSelect}  onlyActive />
         </section>
       </div>
     </MainLayout>
