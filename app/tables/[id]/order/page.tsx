@@ -6,7 +6,8 @@ import { MenuGrid, OrderCart } from '@/components/organisms';
 import { Text, Button } from '@/components/atoms';
 import { MenuItem, Table, Order, apiClient } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, QrCode, X } from 'lucide-react';
+import Image from 'next/image';
 
 export default function TableOrderPage() {
   const params = useParams();
@@ -17,6 +18,7 @@ export default function TableOrderPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [cartItems, setCartItems] = useState<Record<number, number>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [showQRModal, setShowQRModal] = useState(false);
 
   useEffect(() => {
     const initializeOrder = async () => {
@@ -130,6 +132,26 @@ export default function TableOrderPage() {
                 ออร์เดอร์ #{order?.id}
               </Text>
             </div>
+            
+            {/* Small QR Code Display */}
+            {order?.qr_code && (
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setShowQRModal(true)}
+                  className="flex items-center space-x-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                  title="คลิกเพื่อดู QR Code แบบใหญ่"
+                >
+                  <QrCode className="w-4 h-4 text-gray-600" />
+                  <Image
+                    src={`data:image/png;base64,${order.qr_code}`}
+                    alt="QR Code"
+                    width={24}
+                    height={24}
+                    className="rounded"
+                  />
+                </button>
+              </div>
+            )}
           </div>
           
           {order && (
@@ -146,6 +168,37 @@ export default function TableOrderPage() {
           cartItems={cartItems}
         />
       </div>
+
+      {/* QR Code Modal */}
+      {showQRModal && order?.qr_code && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <Text variant="h3">QR Code สำหรับออร์เดอร์</Text>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setShowQRModal(false)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <div className="text-center">
+              <Image
+                src={`data:image/png;base64,${order.qr_code}`}
+                alt="QR Code"
+                width={200}
+                height={200}
+                className="mx-auto rounded-lg shadow-lg"
+              />
+              <Text variant="caption" color="muted" className="mt-2 block">
+                โต๊ะ {table?.table_number} - ออร์เดอร์ #{order.id}
+              </Text>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 }

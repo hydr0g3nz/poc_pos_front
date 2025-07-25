@@ -43,6 +43,7 @@ export interface Order {
   updated_at: string;
   closed_at?: string;
   table?: Table;
+  qr_code?: string;
 }
 
 export interface OrderItem {
