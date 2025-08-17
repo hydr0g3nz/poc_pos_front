@@ -9,7 +9,7 @@ import { OrderWithItems, apiClient } from '@/lib/api';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Receipt } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 export default function OrderDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -19,7 +19,7 @@ export default function OrderDetailPage() {
   
   const [order, setOrder] = useState<OrderWithItems | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
+  const [isPrintReceiptDialogOpen, setIsPrintReceiptDialogOpen] = useState(false);
   useEffect(() => {
     const fetchOrder = async () => {
       try {
@@ -62,7 +62,8 @@ export default function OrderDetailPage() {
   const handleCloseOrder = async () => {
     try {
       await apiClient.closeOrder(orderId);
-      router.push('/');
+      setIsPrintReceiptDialogOpen(true);
+      // router.push('/');
     } catch (err) {
       console.error('Failed to close order:', err);
     }
@@ -76,7 +77,26 @@ export default function OrderDetailPage() {
       console.error('Failed to cancel order:', err);
     }
   };
-
+  const handleConfirmPrintReceipt = () => {
+    try {
+      if (!order) return;
+      apiClient.printOrderReceipt(order.id)
+        .then(() => {
+          setIsPrintReceiptDialogOpen(false);
+          router.push('/');
+        })
+        .catch((err) => {
+          console.error("Failed to print receipt:", err);
+          alert("ไม่สามารถพิมพ์ใบเสร็จได้");
+        });
+    } catch (err) {
+      console.error("Failed to print receipt:", err);
+    }
+  };
+const handleNotPrintReceipt = () => {
+    setIsPrintReceiptDialogOpen(false);
+    router.push("/");
+}
   if (isLoading) {
     return (
       <MainLayout>
@@ -246,6 +266,26 @@ export default function OrderDetailPage() {
           </div>
         </div>
       </div>
+      
+      <Dialog open={isPrintReceiptDialogOpen} onOpenChange={setIsPrintReceiptDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>ปริ้นใบเสร็จ</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Text className="text-gray-600">
+              คุณต้องการปริ้นใบเสร็จสำหรับออร์เดอร์นี้หรือไม่?
+            </Text>
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={handleNotPrintReceipt}>
+              ไม่
+            </Button>
+            <Button onClick={handleConfirmPrintReceipt}>ปริ้น</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 }

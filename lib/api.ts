@@ -1,5 +1,5 @@
 // lib/api.ts
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8080/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://172.20.10.3:8080/api/v1';
 
 // Types
 export interface ApiResponse<T> {
@@ -293,7 +293,16 @@ class ApiClient {
   async getOrderItems(orderId: number): Promise<ApiResponse<OrderItem[]>> {
     return this.request<OrderItem[]>(`/orders/${orderId}/items`);
   }
-
+  async printOrderReceipt(orderId: number): Promise<ApiResponse<null>> {
+    return this.request<null>(`/orders/${orderId}/print/receipt`, {
+      method: 'GET',
+    });
+  }
+  async printOrderQR(orderId: number): Promise<ApiResponse<null>> {
+    return this.request<null>(`/orders/${orderId}/print/qrcode`, {
+      method: 'GET',
+    });
+  }
   async calculateOrderTotal(orderId: number): Promise<ApiResponse<{
     order_id: number;
     items: OrderItem[];

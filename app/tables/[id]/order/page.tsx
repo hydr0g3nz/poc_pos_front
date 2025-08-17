@@ -1,43 +1,45 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { MainLayout } from '@/components/templates/MainLayout';
-import { MenuGrid, OrderCart } from '@/components/organisms';
-import { Text, Button } from '@/components/atoms';
-import { MenuItem, Table, Order, apiClient } from '@/lib/api';
-import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, QrCode, X } from 'lucide-react';
-import Image from 'next/image';
+import React, { useState, useEffect } from "react";
+import { MainLayout } from "@/components/templates/MainLayout";
+import { MenuGrid, OrderCart } from "@/components/organisms";
+import { Text, Button } from "@/components/atoms";
+import { MenuItem, Table, Order, apiClient } from "@/lib/api";
+import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, QrCode, X } from "lucide-react";
+import Image from "next/image";
 
 export default function TableOrderPage() {
   const params = useParams();
   const router = useRouter();
   const tableId = parseInt(params.id as string);
-  
+
   const [table, setTable] = useState<Table | null>(null);
   const [order, setOrder] = useState<Order | null>(null);
   const [cartItems, setCartItems] = useState<Record<number, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [showQRModal, setShowQRModal] = useState(false);
-
+  // const [isPrintQrDialogOpen, setIsPrintReceiptDialogOpen] = useState(false);
   useEffect(() => {
     const initializeOrder = async () => {
       try {
         setIsLoading(true);
-        
+
         // Get table info
         const tableResponse = await apiClient.getTable(tableId);
         setTable(tableResponse.data);
-        
+
         // Check for existing open order
         try {
           const orderResponse = await apiClient.getOpenOrderByTable(tableId);
           setOrder(orderResponse.data);
-          
+
           // Load existing order items into cart
-          const itemsResponse = await apiClient.getOrderItems(orderResponse.data.id);
+          const itemsResponse = await apiClient.getOrderItems(
+            orderResponse.data.id
+          );
           const items: Record<number, number> = {};
-          itemsResponse.data.forEach(item => {
+          itemsResponse.data.forEach((item) => {
             items[item.item_id] = item.quantity;
           });
           setCartItems(items);
@@ -47,7 +49,7 @@ export default function TableOrderPage() {
           setOrder(newOrderResponse.data);
         }
       } catch (err) {
-        console.error('Failed to initialize order:', err);
+        console.error("Failed to initialize order:", err);
       } finally {
         setIsLoading(false);
       }
@@ -75,8 +77,10 @@ export default function TableOrderPage() {
       } else if (difference < 0) {
         // Find existing order item and update quantity
         const itemsResponse = await apiClient.getOrderItems(order.id);
-        const existingItem = itemsResponse.data.find(oi => oi.item_id === item.id);
-        
+        const existingItem = itemsResponse.data.find(
+          (oi) => oi.item_id === item.id
+        );
+
         if (existingItem) {
           if (quantity === 0) {
             await apiClient.removeOrderItem(existingItem.id);
@@ -92,15 +96,15 @@ export default function TableOrderPage() {
         delete newCart[item.id];
         setCartItems(newCart);
       } else {
-        setCartItems(prev => ({ ...prev, [item.id]: quantity }));
+        setCartItems((prev) => ({ ...prev, [item.id]: quantity }));
       }
     } catch (err) {
-      console.error('Failed to update order item:', err);
+      console.error("Failed to update order item:", err);
     }
   };
 
   const handlePaymentComplete = () => {
-    router.push('/');
+    router.push("/");
   };
 
   if (isLoading) {
@@ -112,18 +116,31 @@ export default function TableOrderPage() {
       </MainLayout>
     );
   }
-
+  const handleConfirmPrintReceipt = () => {
+    try {
+      if (!order) return;
+      apiClient.printOrderQR(order.id)
+        .then(() => {
+          setShowQRModal(false);
+        })
+        .catch((err) => {
+          console.error("Failed to print receipt:", err);
+          alert("ไม่สามารถพิมพ์ใบเสร็จได้");
+        });
+    } catch (err) {
+      console.error("Failed to print receipt:", err);
+    }
+  };
+const handleNotPrintReceipt = () => {
+    // router.push("/");
+}
   return (
     <MainLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => router.back()}
-            >
+            <Button variant="outline" size="icon" onClick={() => router.back()}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>
@@ -132,7 +149,7 @@ export default function TableOrderPage() {
                 ออร์เดอร์ #{order?.id}
               </Text>
             </div>
-            
+
             {/* Small QR Code Display */}
             {order?.qr_code && (
               <div className="flex items-center space-x-2">
@@ -153,7 +170,7 @@ export default function TableOrderPage() {
               </div>
             )}
           </div>
-          
+
           {order && (
             <OrderCart
               orderId={order.id}
@@ -163,10 +180,7 @@ export default function TableOrderPage() {
         </div>
 
         {/* Menu Grid */}
-        <MenuGrid
-          onAddItem={handleAddItem}
-          cartItems={cartItems}
-        />
+        <MenuGrid onAddItem={handleAddItem} cartItems={cartItems} />
       </div>
 
       {/* QR Code Modal */}
@@ -183,7 +197,7 @@ export default function TableOrderPage() {
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            
+
             <div className="text-center">
               <Image
                 src={`data:image/png;base64,${order.qr_code}`}
@@ -195,10 +209,17 @@ export default function TableOrderPage() {
               <Text variant="caption" color="muted" className="mt-2 block">
                 โต๊ะ {table?.table_number} - ออร์เดอร์ #{order.id}
               </Text>
+              <Button
+                className="mt-4"
+                onClick={handleConfirmPrintReceipt}
+                >
+                  Print QR Code
+                </Button>
             </div>
           </div>
         </div>
       )}
+
     </MainLayout>
   );
 }
