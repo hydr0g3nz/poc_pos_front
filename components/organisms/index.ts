@@ -4,3 +4,4 @@ export { OrderCart } from './OrderCart';
 export { TableGrid } from './TableGrid';
 export { RevenueOverview } from './RevenueOverview';
 export { MobileOrderTracker } from './MobileOrderTracker';
+export { OrderSummary } from './OrderSummary';

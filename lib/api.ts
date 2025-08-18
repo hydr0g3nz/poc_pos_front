@@ -422,6 +422,14 @@ async deleteCategory(id: number): Promise<ApiResponse<null>> {
   }>> {
     return this.request(`/revenue/total?start_date=${startDate}&end_date=${endDate}`);
   }
+  async getOrdersByDateRange(startDate: string, endDate: string): Promise<ApiResponse<{
+    orders: Order[];
+    total: number;
+    limit: number;
+    offset: number;
+  }>> {
+    return this.request(`/orders/date-range?start_date=${startDate}&end_date=${endDate}`);
+  }
 }
 
 export const apiClient = new ApiClient();

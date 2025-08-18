@@ -1,127 +1,96 @@
-
-// components/organisms/MenuGrid/MenuGrid.tsx
-import React, { useState, useEffect } from 'react';
-import { MenuItemCard, CategoryFilter, SearchBar } from '@/components/molecules';
-import { Spinner, Text } from '@/components/atoms';
-import { MenuItem, Category, apiClient } from '@/lib/api';
+import { useState } from 'react';
+import { MenuItem, Category } from '@/types';
+import { MenuItemCard } from '@/components/molecules/MenuItemCard';
+import { CategoryFilter } from '@/components/molecules/CategoryFilter';
+import { Input } from '@/components/atoms/Input';
+import { useOrder } from '@/context/OrderContext';
 
 interface MenuGridProps {
-  onAddItem: (item: MenuItem, quantity: number) => void;
-  cartItems: Record<number, number>;
-  disabled?: boolean;
+  menuItems: MenuItem[];
+  categories: Category[];
+  loading?: boolean;
+  onSearch?: (query: string) => Promise<void>;
 }
 
-export const MenuGrid: React.FC<MenuGridProps> = ({
-  onAddItem,
-  cartItems,
-  disabled = false,
-}) => {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+export function MenuGrid({ menuItems, categories, loading = false, onSearch }: MenuGridProps) {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [quantities, setQuantities] = useState<Record<number, number>>({});
+  const { addToCart } = useOrder();
 
-  // Fetch categories
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await apiClient.getCategories();
-        setCategories(response.data);
-      } catch (err) {
-        console.error('Failed to fetch categories:', err);
-        setError('ไม่สามารถโหลดหมวดหมู่ได้');
-      }
-    };
+  const filteredItems = menuItems.filter(item => {
+    const matchesCategory = !selectedCategory || item.category_id === selectedCategory;
+    const matchesSearch = !searchQuery || 
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
-    fetchCategories();
-  }, []);
-
-  // Fetch menu items
-  useEffect(() => {
-    const fetchMenuItems = async () => {
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        let response;
-        
-        if (searchQuery) {
-          response = await apiClient.searchMenuItems(searchQuery, 100, 0);
-        } else if (selectedCategory) {
-          response = await apiClient.getMenuItemsByCategory(selectedCategory, 100, 0);
-        } else {
-          response = await apiClient.getMenuItems(100, 0);
-        }
-        
-        setMenuItems(response.data.items);
-      } catch (err) {
-        console.error('Failed to fetch menu items:', err);
-        setError('ไม่สามารถโหลดรายการเมนูได้');
-        setMenuItems([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchMenuItems();
-  }, [selectedCategory, searchQuery]);
-
-  const handleQuantityChange = (item: MenuItem, quantity: number) => {
-    if (quantity > 0) {
-      onAddItem(item, quantity);
-    }
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    onSearch?.(query);
   };
 
-  if (error) {
+  const handleQuantityChange = (itemId: number, quantity: number) => {
+    setQuantities(prev => ({ ...prev, [itemId]: quantity }));
+  };
+
+  const handleAddToCart = (menuItem: MenuItem, quantity: number) => {
+    addToCart(menuItem, quantity);
+    // Reset quantity to 1 after adding
+    setQuantities(prev => ({ ...prev, [menuItem.id]: 1 }));
+  };
+
+  if (loading) {
     return (
-      <div className="text-center py-8">
-        <Text color="destructive">{error}</Text>
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-10 bg-gray-200 rounded mb-4"></div>
+          <div className="h-8 bg-gray-200 rounded mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-48 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Search Bar */}
-      <SearchBar
-        onSearch={setSearchQuery}
+      {/* Search */}
+      <Input
         placeholder="ค้นหาเมนู..."
+        value={searchQuery}
+        onChange={(e) => handleSearch(e.target.value)}
       />
 
       {/* Category Filter */}
       <CategoryFilter
         categories={categories}
         selectedCategory={selectedCategory}
-        onCategorySelect={setSelectedCategory}
-        isLoading={isLoading}
+        onCategoryChange={setSelectedCategory}
       />
 
       {/* Menu Items Grid */}
-      {isLoading ? (
-        <div className="flex justify-center py-8">
-          <Spinner size="lg" />
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {menuItems.map((item) => (
-            <MenuItemCard
-              key={item.id}
-              item={item}
-              quantity={cartItems[item.id] || 0}
-              onQuantityChange={(quantity) => handleQuantityChange(item, quantity)}
-              disabled={disabled}
-            />
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredItems.map((item) => (
+          <MenuItemCard
+            key={item.id}
+            menuItem={item}
+            quantity={quantities[item.id] || 1}
+            onQuantityChange={(quantity) => handleQuantityChange(item.id, quantity)}
+            onAddToCart={handleAddToCart}
+          />
+        ))}
+      </div>
 
-      {!isLoading && menuItems.length === 0 && (
-        <div className="text-center py-8">
-          <Text color="muted">ไม่พบรายการเมนู</Text>
+      {filteredItems.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-gray-500">ไม่พบเมนูที่ค้นหา</p>
         </div>
       )}
     </div>
   );
-};
+}

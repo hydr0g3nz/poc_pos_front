@@ -1,112 +1,236 @@
-// app/customer/orders/page.tsx
 'use client';
+import { useState, useEffect } from 'react';
+import { CustomerLayout } from '@/components/templates/CustomerLayout';
+import { MenuGrid } from '@/components/organisms/MenuGrid';
+import { OrderSummary } from '@/components/organisms/OrderSummary';
+import { TableLayout } from '@/components/organisms/TableLayout';
+import { PaymentMethodSelector } from '@/components/molecules/PaymentMethodSelector';
+import { Modal } from '@/components/atoms/Modal';
+import { Button } from '@/components/atoms/Button';
+import { useMenu } from '@/hooks/useMenu';
+import { useOrder } from '@/context/OrderContext';
+import { useOrderAPI } from '@/hooks/useOrder';
+import { PaymentMethod } from '@/types';
 
-import React, { useState, useEffect } from 'react';
-import { Button, Text, Input } from '@/components/atoms';
-import { OrderStatusCard, OrderProgressBar } from '@/components/molecules';
-import { MobileOrderTracker } from '@/components/organisms';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Order, OrderItem, apiClient } from '@/lib/api';
-import { Search, ArrowLeft, RefreshCw } from 'lucide-react';
-import { cn } from '@/lib/utils';
+export default function CustomerOrderPage() {
+  const [step, setStep] = useState<'table' | 'menu' | 'review' | 'payment' | 'complete'>('table');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [completedOrderId, setCompletedOrderId] = useState<number | null>(null);
+  
+  const { menuItems, categories, loading: menuLoading, fetchMenuItems } = useMenu();
+  const { state, setTable } = useOrder();
+  const { createOrder, addOrderItems, closeOrder, processPayment, loading: orderLoading } = useOrderAPI();
 
-export default function CustomerOrdersPage() {
-  const [qrCode, setQrCode] = useState('');
-  const [tableId, setTableId] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const handleTableSelect = (tableId: number) => {
+    setTable(tableId);
+    setStep('menu');
+  };
 
-  const handleQRScan = async () => {
-    if (!qrCode.trim()) {
-      setError('กรุณาใส่ QR Code');
+  const handleCheckout = () => {
+    setStep('review');
+  };
+
+  const handleConfirmOrder = () => {
+    setShowPaymentModal(true);
+  };
+
+  const handlePayment = async () => {
+    if (!selectedPaymentMethod || !state.selectedTable || state.cartItems.length === 0) {
       return;
     }
 
-    setIsLoading(true);
-    setError(null);
-
     try {
-      const scanResponse = await apiClient.scanQRCode(qrCode);
-      const { table_id } = scanResponse.data;
-      setTableId(table_id);
-    } catch (err) {
-      console.error('QR scan failed:', err);
-      setError('QR Code ไม่ถูกต้องหรือไม่พบข้อมูล');
-    } finally {
-      setIsLoading(false);
+      // Create order
+      const order = await createOrder(state.selectedTable);
+      if (!order) return;
+
+      // Add items to order
+      const success = await addOrderItems(order.id, state.cartItems);
+      if (!success) return;
+
+      // Close order
+      const closedOrder = await closeOrder(order.id);
+      if (!closedOrder) return;
+
+      // Process payment
+      const payment = await processPayment({
+        order_id: order.id,
+        amount: state.total,
+        method: selectedPaymentMethod,
+      });
+
+      if (payment) {
+        setCompletedOrderId(order.id);
+        setStep('complete');
+        setShowPaymentModal(false);
+      }
+    } catch (error) {
+      console.error('Payment failed:', error);
     }
   };
 
-  const handleBack = () => {
-    setTableId(null);
-    setQrCode('');
-    setError(null);
+  const handleStartNewOrder = () => {
+    setStep('table');
+    setCompletedOrderId(null);
+    setSelectedPaymentMethod(null);
   };
 
-  if (!tableId) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-background p-4">
-        <div className="max-w-md mx-auto pt-20">
-          <Card className="border-0 shadow-xl">
-            <CardHeader className="text-center pb-6">
-              <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search className="w-10 h-10 text-blue-500" />
-              </div>
-              <CardTitle className="text-2xl font-bold text-foreground">
-                ติดตามออเดอร์
-              </CardTitle>
-              <Text className="text-muted-foreground">
-                สแกน QR Code บนโต๊ะของคุณเพื่อดูสถานะออเดอร์
-              </Text>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <Input
-                  value={qrCode}
-                  onChange={(e) => setQrCode(e.target.value)}
-                  placeholder="ใส่ QR Code หรือสแกนด้วยกล้อง"
-                  className="h-14 text-center text-lg"
-                />
-                
-                <Button
-                  onClick={handleQRScan}
-                  disabled={!qrCode.trim() || isLoading}
-                  isLoading={isLoading}
-                  className="w-full h-14 text-lg font-semibold bg-blue-500 hover:bg-blue-600"
-                  glow
-                >
-                  ดูสถานะออเดอร์
-                </Button>
-              </div>
-              
-              {error && (
-                <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-                  <Text color="destructive" className="text-center">{error}</Text>
-                </div>
-              )}
-              
-              <div className="text-center">
-                <Text variant="caption" className="text-muted-foreground">
-                  หรือ{' '}
-                  <a href="/customer" className="text-primary hover:underline">
-                    สั่งอาหารใหม่
-                  </a>
-                </Text>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-background">
-      <MobileOrderTracker 
-        tableId={tableId} 
-        onBack={handleBack}
-        className="h-screen"
-      />
-    </div>
+    <CustomerLayout>
+      <div className="space-y-6">
+        {/* Progress Steps */}
+        <div className="flex items-center justify-center space-x-4">
+          {['table', 'menu', 'review', 'payment', 'complete'].map((stepName, index) => {
+            const currentIndex = ['table', 'menu', 'review', 'payment', 'complete'].indexOf(step);
+            const isActive = index <= currentIndex;
+            const isCurrent = step === stepName;
+            
+            return (
+              <div key={stepName} className="flex items-center">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    isActive
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-200 text-gray-600'
+                  } ${isCurrent ? 'ring-4 ring-blue-100' : ''}`}
+                >
+                  {index + 1}
+                </div>
+                {index < 4 && (
+                  <div
+                    className={`w-12 h-1 ${
+                      index < currentIndex ? 'bg-blue-600' : 'bg-gray-200'
+                    }`}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Step Content */}
+        {step === 'table' && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-900">เลือกโต๊ะ</h2>
+              <p className="text-gray-600">กรุณาเลือกโต๊ะที่ต้องการสั่งอาหาร</p>
+            </div>
+            <TableLayout onTableSelect={handleTableSelect} showStatus={false} />
+          </div>
+        )}
+
+        {step === 'menu' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">เมนูอาหาร</h2>
+              <MenuGrid
+                menuItems={menuItems}
+                categories={categories}
+                loading={menuLoading}
+                // onSearch={fetchMenuItems}
+              />
+            </div>
+            <div className="lg:col-span-1">
+              <div className="sticky top-8">
+                <OrderSummary onCheckout={handleCheckout} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 'review' && (
+          <div className="max-w-2xl mx-auto space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-900">ตรวจสอบรายการสั่งอาหาร</h2>
+              <p className="text-gray-600">กรุณาตรวจสอบรายการก่อนยืนยันการสั่ง</p>
+            </div>
+            <OrderSummary readonly showActions={false} />
+            <div className="flex space-x-4">
+              <Button
+                variant="secondary"
+                onClick={() => setStep('menu')}
+                className="flex-1"
+              >
+                กลับไปแก้ไข
+              </Button>
+              <Button
+                onClick={handleConfirmOrder}
+                className="flex-1"
+              >
+                ยืนยันการสั่ง
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {step === 'complete' && (
+          <div className="max-w-md mx-auto text-center space-y-6">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">สั่งอาหารสำเร็จ!</h2>
+              <p className="text-gray-600 mt-2">
+                หมายเลขออเดอร์: #{completedOrderId}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                อาหารจะเสิร์ฟในอีกประมาณ 15-20 นาที
+              </p>
+            </div>
+            <Button
+              onClick={handleStartNewOrder}
+              className="w-full"
+            >
+              สั่งอาหารใหม่
+            </Button>
+          </div>
+        )}
+
+        {/* Payment Modal */}
+        <Modal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          title="เลือกวิธีการชำระเงิน"
+          size="md"
+        >
+          <div className="space-y-6">
+            <PaymentMethodSelector
+              selectedMethod={selectedPaymentMethod}
+              onMethodChange={setSelectedPaymentMethod}
+            />
+            
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">ยอดที่ต้องชำระ</span>
+                <span className="text-xl font-bold text-green-600">
+                  ฿{state.total.toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex space-x-3">
+              <Button
+                variant="secondary"
+                onClick={() => setShowPaymentModal(false)}
+                className="flex-1"
+              >
+                ยกเลิก
+              </Button>
+              <Button
+                onClick={handlePayment}
+                disabled={!selectedPaymentMethod}
+                loading={orderLoading}
+                className="flex-1"
+              >
+                ชำระเงิน
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      </div>
+    </CustomerLayout>
   );
 }

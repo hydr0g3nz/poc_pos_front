@@ -1,46 +1,36 @@
-// components/molecules/PaymentMethodSelector/PaymentMethodSelector.tsx
-import React from 'react';
-import { Button } from '@/components/atoms';
-import { CreditCard, Wallet, DollarSign } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { PaymentMethod } from '@/types';
+import { Card } from '@/components/atoms/Card';
 
 interface PaymentMethodSelectorProps {
-  selectedMethod: string;
-  onMethodSelect: (method: string) => void;
-  disabled?: boolean;
+  selectedMethod: PaymentMethod | null;
+  onMethodChange: (method: PaymentMethod) => void;
 }
 
 const paymentMethods = [
-  { id: 'cash', label: 'เงินสด', icon: DollarSign, color: 'text-green-500' },
-  { id: 'credit_card', label: 'บัตรเครดิต', icon: CreditCard, color: 'text-blue-500' },
-  { id: 'wallet', label: 'กระเป๋าเงิน', icon: Wallet, color: 'text-purple-500' },
+  { id: 'cash' as PaymentMethod, name: 'เงินสด', icon: '💰' },
+  { id: 'credit_card' as PaymentMethod, name: 'บัตรเครดิต', icon: '💳' },
+  { id: 'wallet' as PaymentMethod, name: 'กระเป๋าเงินดิจิทัล', icon: '📱' },
 ];
 
-export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
-  selectedMethod,
-  onMethodSelect,
-  disabled = false,
-}) => {
+export function PaymentMethodSelector({ selectedMethod, onMethodChange }: PaymentMethodSelectorProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
       {paymentMethods.map((method) => (
-        <Button
+        <Card
           key={method.id}
-          variant={selectedMethod === method.id ? 'default' : 'outline'}
-          onClick={() => onMethodSelect(method.id)}
-          disabled={disabled}
-          className={cn(
-            'flex flex-col items-center justify-center p-6 h-24 text-center transition-all duration-200',
-            selectedMethod === method.id && 'active-glow'
-          )}
+          className={`p-4 cursor-pointer border-2 transition-colors ${
+            selectedMethod === method.id
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-200 hover:border-gray-300'
+          }`}
+          onClick={() => onMethodChange(method.id)}
         >
-          <method.icon className={cn(
-            'w-8 h-8 mb-2',
-            selectedMethod === method.id ? 'text-primary-foreground' : method.color
-          )} />
-          <span className="text-sm font-medium">{method.label}</span>
-        </Button>
+          <div className="text-center">
+            <div className="text-2xl mb-2">{method.icon}</div>
+            <div className="font-medium">{method.name}</div>
+          </div>
+        </Card>
       ))}
     </div>
   );
-};
+}

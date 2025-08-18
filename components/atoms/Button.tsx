@@ -1,63 +1,46 @@
-// components/atoms/Button/Button.tsx
-import React from 'react';
-import { Button as ShadcnButton } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { LucideIcon } from 'lucide-react';
-
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
-  isLoading?: boolean;
-  icon?: LucideIcon;
-  iconPosition?: 'left' | 'right';
-  glow?: boolean;
+  variant?: 'primary' | 'secondary' | 'danger' | 'success';
+  size?: 'sm' | 'md' | 'lg';
+  loading?: boolean;
 }
 
-export const Button: React.FC<ButtonProps> = ({
-  children,
-  variant = 'default',
-  size = 'default',
-  isLoading = false,
-  icon: Icon,
-  iconPosition = 'left',
-  glow = false,
-  className,
+export function Button({ 
+  children, 
+  variant = 'primary', 
+  size = 'md', 
+  loading = false,
   disabled,
-  ...props
-}) => {
+  className = '',
+  ...props 
+}: ButtonProps) {
+  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors';
+  
+  const variants = {
+    primary: 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300',
+    secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 disabled:bg-gray-100',
+    danger: 'bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300',
+    success: 'bg-green-600 text-white hover:bg-green-700 disabled:bg-green-300',
+  };
+  
+  const sizes = {
+    sm: 'px-3 py-1.5 text-sm',
+    md: 'px-4 py-2 text-base',
+    lg: 'px-6 py-3 text-lg',
+  };
+
   return (
-    <ShadcnButton
-      variant={variant}
-      size={size}
-      disabled={disabled || isLoading}
-      className={cn(
-        'transition-all duration-300 font-medium',
-        isLoading && 'opacity-70 cursor-not-allowed',
-        glow && 'active-glow',
-        variant === 'default' && 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl',
-        variant === 'outline' && 'border-border bg-card hover:bg-accent hover:text-accent-foreground',
-        variant === 'ghost' && 'hover:bg-accent hover:text-accent-foreground',
-        variant === 'secondary' && 'bg-secondary hover:bg-secondary/90 text-secondary-foreground',
-        size === 'default' && 'h-11 px-6 py-2',
-        size === 'sm' && 'h-9 px-4 py-2 text-sm',
-        size === 'lg' && 'h-12 px-8 py-3 text-lg',
-        size === 'icon' && 'h-10 w-10',
-        className
-      )}
+    <button
+      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
+      disabled={disabled || loading}
       {...props}
     >
-      {isLoading ? (
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-          {children && <span>Loading...</span>}
-        </div>
-      ) : (
-        <div className="flex items-center space-x-2">
-          {Icon && iconPosition === 'left' && <Icon className="w-4 h-4" />}
-          {children && <span>{children}</span>}
-          {Icon && iconPosition === 'right' && <Icon className="w-4 h-4" />}
-        </div>
+      {loading && (
+        <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
       )}
-    </ShadcnButton>
+      {children}
+    </button>
   );
-};
+}
