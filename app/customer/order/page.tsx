@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { CustomerLayout } from '@/components/templates/CustomerLayout';
 import { MenuGrid } from '@/components/organisms/MenuGrid';
 import { OrderSummary } from '@/components/organisms/OrderSummary';
 import { TableLayout } from '@/components/organisms/TableLayout';
@@ -77,7 +76,6 @@ export default function CustomerOrderPage() {
   };
 
   return (
-    <CustomerLayout>
       <div className="space-y-6">
         {/* Progress Steps */}
         <div className="flex items-center justify-center space-x-4">
@@ -231,6 +229,5 @@ export default function CustomerOrderPage() {
           </div>
         </Modal>
       </div>
-    </CustomerLayout>
   );
 }

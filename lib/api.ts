@@ -1,5 +1,5 @@
 // lib/api.ts
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://172.20.10.3:8080/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8080/api/v1';
 
 // Types
 export interface ApiResponse<T> {
